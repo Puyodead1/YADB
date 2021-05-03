@@ -1,0 +1,36 @@
+[
+  {
+    "name": "eval",
+    "description": "Evaluates code",
+    "options": [
+      {
+        "type": 3,
+        "name": "code",
+        "description": "Code to evaluate",
+        "required": true
+      },
+      {
+        "type": 5,
+        "name": "ephemeral",
+        "description": "Whether the reply should be ephemeral",
+        "required": false
+      }
+    ]
+  },
+  {
+    "name": "git",
+    "description": "Gets current git branch",
+    "options": [
+      {
+        "type": 5,
+        "name": "ephemeral",
+        "description": "Whether the reply should be ephemeral",
+        "required": false
+      }
+    ]
+  },
+  {
+    "name": "ping",
+    "description": "Gets current bot ping"
+  }
+]
