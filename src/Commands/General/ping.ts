@@ -23,7 +23,7 @@ export const run = async (
     ping =
       (pingMsg.editedTimestamp || pingMsg.createdTimestamp) -
       (msg.editedTimestamp || msg.createdTimestamp);
-  } else if (msg instanceof CommandInteraction) {
+  } else {
     // msg is a CommandInteraction
     user = msg.user;
     // NOTE: we cant mark this as ephemeral, we get a 404 on fetch if we try

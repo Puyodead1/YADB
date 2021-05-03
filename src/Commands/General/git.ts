@@ -20,7 +20,7 @@ export const run = async (
     user = msg.user;
     if (msg.options.length > 0) {
       ephemeral = Boolean(msg.options[0].value);
-    }
+    } else ephemeral = info.ephemeral;
   } else {
     user = msg.author;
   }
@@ -49,9 +49,9 @@ export const run = async (
   if (msg instanceof CommandInteraction) {
     return msg.reply("", {
       embeds: [embed],
-      ephemeral: ephemeral || info.ephemeral,
+      ephemeral: ephemeral,
     });
-  } else if (msg instanceof Message) {
+  } else {
     return msg.reply({
       embed,
     });
