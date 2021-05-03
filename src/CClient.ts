@@ -70,20 +70,25 @@ export default class CClient extends Discord.Client {
         join(__dirname, "Commands", command.info.category, command.info.name)
       )
     ];
-    const main = mod?.require?.main;
-    if (!main)
+    if (!mod) {
       throw new Error(
-        `[Commands] Failed to unload command ${name}: Failed to get module main!`
+        `[Commands] Failed to unload command ${name}: Failed to get module!`
       );
-    const len = main.children.length;
-    if (!len)
+    }
+
+    if (!mod.parent)
       throw new Error(
-        `[Commands] Failed to unload command ${name}: Failed to get children length!`
+        `[Commands] Failed to unload command ${name}: Failed to get module parent!`
       );
 
-    for (let i = 0; i < len; i++) {
-      if (main.children[i] === mod) {
-        main.children.splice(i, 1);
+    if (!mod.parent?.children)
+      throw new Error(
+        `[Commands] Failed to unload command ${name}: Failed to get children!`
+      );
+
+    for (let i = 0; i < mod.parent.children.length; i++) {
+      if (mod.parent.children[i] === mod) {
+        mod.parent.children.splice(i, 1);
         break;
       }
     }

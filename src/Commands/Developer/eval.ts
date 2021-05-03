@@ -9,7 +9,7 @@ export const run = async (client: CClient, msg: Message, args: string[]) => {
   initClean(client.token as string);
   if (!args.length) return msg.reply("No code provided.");
   const code = args.join(" ");
-  const { success, result, time, type } = await evalCode(code);
+  const { success, result, time, type } = await evalCode(client, msg, code);
 
   if (result.length > 2000) {
     const url = await upload(result);
@@ -44,7 +44,7 @@ async function upload(body: string) {
   return `https://hastebin.com/${json.key}`;
 }
 
-async function evalCode(code: string) {
+async function evalCode(client: CClient, msg: Message, code: string) {
   code = code.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
   const stopwatch = new Stopwatch();
   let success, syncTime, asyncTime, result;

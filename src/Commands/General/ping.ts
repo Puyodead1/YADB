@@ -1,11 +1,36 @@
-import { Message, MessageEmbed, Permissions } from "discord.js";
+import {
+  CommandInteraction,
+  Message,
+  MessageEmbed,
+  Permissions,
+  User,
+} from "discord.js";
 import CClient from "../../CClient";
+import { CCommandType } from "../../Interfaces/CCommand.interface";
 
-export const run = async (client: CClient, msg: Message) => {
-  const pingMsg = await msg.reply("Ping?");
-  const ping =
-    (pingMsg.editedTimestamp || pingMsg.createdTimestamp) -
-    (msg.editedTimestamp || msg.createdTimestamp);
+export const run = async (
+  client: CClient,
+  msg: Message | CommandInteraction
+) => {
+  let pingMsg: Message;
+  let user: User;
+  let ping: number;
+
+  if (msg instanceof Message) {
+    // msg is a Message
+    user = msg.author;
+    pingMsg = await msg.reply("Ping?");
+    ping =
+      (pingMsg.editedTimestamp || pingMsg.createdTimestamp) -
+      (msg.editedTimestamp || msg.createdTimestamp);
+  } else if (msg instanceof CommandInteraction) {
+    // msg is a CommandInteraction
+    user = msg.user;
+    // NOTE: we cant mark this as ephemeral, we get a 404 on fetch if we try
+    await msg.reply("Pong?");
+    pingMsg = await msg.fetchReply();
+    ping = pingMsg.createdTimestamp - msg.createdTimestamp;
+  }
 
   const pingEmbed = new MessageEmbed()
     .setAuthor(
@@ -18,19 +43,19 @@ export const run = async (client: CClient, msg: Message) => {
     )
     .setColor("PURPLE")
     .setTitle("Ping")
-    .addField("🤖 Bot", `${ping}ms`, true)
+    .addField("🤖 Bot", `${ping!}ms`, true)
     .addField("🌐 Gateway", `${client.ws.ping}ms`, true)
     .setTimestamp()
     .setFooter(
-      `Requested by ${msg.author.tag}`,
-      msg.author.displayAvatarURL({
+      `Requested by ${user!.tag}`,
+      user!.displayAvatarURL({
         dynamic: true,
         format: "png",
         size: 2048,
       }) || undefined
     );
 
-  return pingMsg.edit({ content: "", embed: pingEmbed });
+  return pingMsg!.edit({ content: "", embed: pingEmbed });
 };
 
 export const info = {
@@ -40,4 +65,6 @@ export const info = {
   usage: "ping",
   requiredUserPermissions: [],
   requiredBotPermissions: [Permissions.FLAGS.SEND_MESSAGES],
+  type: CCommandType.HYBRID,
+  ephemeral: false,
 };
