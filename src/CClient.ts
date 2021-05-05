@@ -1,17 +1,102 @@
-import Discord, { ClientOptions, Collection } from "discord.js";
+import Discord, {
+  ClientOptions as DiscordClientOptions,
+  Collection,
+} from "discord.js";
 import { promises, readdir } from "fs";
 import { sep } from "node:path";
 import { join, resolve } from "path";
+import { ClientOpts as RedisClientOptions, RedisClient } from "redis";
 import CCommand from "./Interfaces/CCommand.interface";
+import Crypto from "crypto";
+import { Cipher, CipherGCMOptions } from "node:crypto";
+
+export interface CClientOptions {
+  discord: {
+    clientId: string;
+    clientSecret: string;
+  } & DiscordClientOptions;
+  redis?: {
+    ttl?: number;
+  } & RedisClientOptions;
+  encryption?: CipherGCMOptions;
+}
 
 export default class CClient extends Discord.Client {
-  constructor(options: ClientOptions) {
-    super(options);
+  public commands: Collection<string, CCommand>;
+  public mentionPrefix: RegExp | undefined;
+  readonly redisClient: RedisClient;
+  readonly encryptionKey: string;
+  readonly encryptionIv: Buffer;
+
+  constructor(options: CClientOptions) {
+    super(options.discord);
+
+    // variables used for data encryption
+    this.encryptionKey = Crypto.createHash("sha256")
+      .update(options.discord.clientSecret)
+      .digest("base64")
+      .substr(0, 32);
+
+    this.encryptionIv = Crypto.randomBytes(16);
 
     this.commands = new Collection<string, CCommand>();
+    this.redisClient = new RedisClient(options.redis || {});
 
     this.loadEvents();
     this.loadCommands();
+  }
+
+  /**
+   * Encrypts data
+   * @param data data to encrypt
+   * @returns an object containing the iv and encrypted content
+   */
+  encryptData(data: any) {
+    let content: string;
+    if (typeof data === "string") {
+      content = data;
+    } else if (typeof data === "object") {
+      content = JSON.stringify(data);
+    } else if (typeof data === "number") {
+      content = data.toString();
+    } else {
+      throw new Error(
+        `Data must be of type string, object, or number. Recieved ${typeof data}`
+      );
+    }
+
+    const cipher = Crypto.createCipheriv(
+      "aes-256-cbc",
+      Buffer.from(this.encryptionKey),
+      this.encryptionIv
+    );
+
+    let encrypted = cipher.update(content);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+    return {
+      iv: this.encryptionIv.toString("hex"),
+      content: encrypted.toString("hex"),
+    };
+  }
+
+  /**
+   * Decrypts data
+   * @param content encrypted content to decrypt in hex
+   * @param iv the iv to use for decryption in hex, defaults to this instances current iv
+   * @returns the decrypted data
+   */
+  decryptData(content: string, iv?: string) {
+    const decryptionIv = iv ? Buffer.from(iv, "hex") : this.encryptionIv;
+    const decipher = Crypto.createDecipheriv(
+      "aes-256-cbc",
+      Buffer.from(this.encryptionKey),
+      decryptionIv
+    );
+    let decrypted = decipher.update(Buffer.from(content, "hex"));
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+    return decrypted.toString();
   }
 
   loadEvents() {
@@ -122,7 +207,4 @@ export default class CClient extends Discord.Client {
       }
     }
   }
-
-  public commands: Collection<string, CCommand>;
-  public mentionPrefix: RegExp | undefined;
 }
