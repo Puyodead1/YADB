@@ -1,4 +1,5 @@
 import { PermissionResolvable } from "discord.js";
+import { CCommandType } from "./CCommand.interface";
 
 export default interface CCommandInfo {
   name: string;
@@ -9,4 +10,6 @@ export default interface CCommandInfo {
   requiredUserPermissions?: PermissionResolvable[];
   requiredBotPermissions?: PermissionResolvable[];
   isDev?: boolean;
+  type: CCommandType;
+  ephemeral?: boolean;
 }

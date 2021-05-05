@@ -14,8 +14,11 @@
     "@klasa/utils": "^0.0.8",
     "@types/centra": "^2.2.0",
     "@types/node": "^15.0.1",
+    "@types/redis": "^2.8.28",
     "centra": "^2.4.2",
-    "discord.js": "github:discordjs/discord.js",
-    "ms": "^2.1.3"
+    "discord.js": "github:vaporox/discord.js#feat-interactions",
+    "mongo": "^0.1.0",
+    "ms": "^2.1.3",
+    "redis": "^3.1.2"
   }
 }

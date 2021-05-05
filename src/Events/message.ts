@@ -1,7 +1,7 @@
 import { Message, PermissionResolvable } from "discord.js";
 import CClient from "../CClient";
 import { prefix, owners } from "../config.json";
-import CCommand from "../Interfaces/CCommand.interface";
+import CCommand, { CCommandType } from "../Interfaces/CCommand.interface";
 
 export default async (client: CClient, msg: Message) => {
   if (msg.author.bot || !msg.guild || msg.channel.type === "dm") return;
@@ -83,6 +83,11 @@ export default async (client: CClient, msg: Message) => {
       );
     }
   }
+
+  if (cmd.info.type === CCommandType.INTERACTION)
+    return msg.reply(
+      `That command is a slash command! Please use '/${cmd.info.name}'.`
+    );
 
   console.log(
     `[Message] ${msg.author.tag} (${msg.author.id}) ran command '${cmdName}'.`
