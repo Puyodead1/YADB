@@ -1,14 +1,14 @@
 {
-  "name": "eval-bot",
+  "name": "yadb",
   "version": "1.0.0",
-  "description": "",
+  "description": "Yet Another Discord Bot",
   "main": "index.js",
   "scripts": {
     "build": "tsc"
   },
   "keywords": [],
   "author": "Puyodead1",
-  "license": "ISC",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@klasa/stopwatch": "^0.0.1",
     "@klasa/utils": "^0.0.8",
