@@ -1,5 +1,11 @@
 {
   "token": "bot token",
+  "clientId": "bot id",
+  "clientSecret": "bot client secret from the oauth tab",
   "prefix": "..",
-  "owners": ["213247101314924545"]
+  "owners": ["213247101314924545"],
+  "redis": {
+    "host": "127.0.0.1",
+    "ttl": 2.592e9
+  }
 }
