@@ -4,7 +4,8 @@
   "description": "Yet Another Discord Bot",
   "main": "index.js",
   "scripts": {
-    "build": "tsc"
+    "build:code": "tsc",
+    "build:docs": "typedoc src/index.ts"
   },
   "keywords": [],
   "author": "Puyodead1",
