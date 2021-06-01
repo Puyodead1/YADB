@@ -1,70 +1,50 @@
-import {
-  CommandInteraction,
-  Message,
-  MessageEmbed,
-  Permissions,
-  User,
-} from "discord.js";
+import { Permissions } from "discord.js";
+import { Message, MessageEmbed } from "discord.js";
 import CClient from "../../CClient";
-import { CCommandType } from "../../Interfaces/CCommand.interface";
+import { CPermissionLevel } from "../../Interfaces/CInterfaces";
+import CCommand from "../../lib/CCommand";
 
-export const run = async (
-  client: CClient,
-  msg: Message | CommandInteraction
-) => {
-  let pingMsg: Message;
-  let user: User;
-  let ping: number;
-
-  if (msg instanceof Message) {
-    // msg is a Message
-    user = msg.author;
-    pingMsg = await msg.reply("Ping?");
-    ping =
-      (pingMsg.editedTimestamp || pingMsg.createdTimestamp) -
-      (msg.editedTimestamp || msg.createdTimestamp);
-  } else {
-    // msg is a CommandInteraction
-    user = msg.user;
-    // NOTE: we cant mark this as ephemeral, we get a 404 on fetch if we try
-    await msg.reply("Pong?");
-    pingMsg = await msg.fetchReply();
-    ping = pingMsg.createdTimestamp - msg.createdTimestamp;
+export default class extends CCommand {
+  constructor(client: CClient) {
+    super(client, {
+      name: "ping",
+      description: "Gets the bots ping",
+      usage: "ping",
+      category: "General",
+      permissionLevel: CPermissionLevel.USER,
+      requiredBotPermissions: [Permissions.FLAGS.SEND_MESSAGES],
+    });
   }
 
-  const pingEmbed = new MessageEmbed()
-    .setAuthor(
-      client.user?.username,
-      client.user?.displayAvatarURL({
-        dynamic: true,
-        format: "png",
-        size: 2048,
-      }) || undefined
-    )
-    .setColor("PURPLE")
-    .setTitle("Ping")
-    .addField("🤖 Bot", `${ping!}ms`, true)
-    .addField("🌐 Gateway", `${client.ws.ping}ms`, true)
-    .setTimestamp()
-    .setFooter(
-      `Requested by ${user!.tag}`,
-      user!.displayAvatarURL({
-        dynamic: true,
-        format: "png",
-        size: 2048,
-      }) || undefined
-    );
+  async run(msg: Message, args: string[], level: number) {
+    const pingMsg = await msg.reply("Ping?");
+    const ping =
+      (pingMsg.editedTimestamp || pingMsg.createdTimestamp) -
+      (msg.editedTimestamp || msg.createdTimestamp);
 
-  return pingMsg!.edit({ content: "", embed: pingEmbed });
-};
+    const pingEmbed = new MessageEmbed()
+      .setAuthor(
+        this.client.user?.username,
+        this.client.user?.displayAvatarURL({
+          dynamic: true,
+          format: "png",
+          size: 2048,
+        }) || undefined
+      )
+      .setColor("PURPLE")
+      .setTitle("Ping")
+      .addField("🤖 Bot", `${ping!}ms`, true)
+      .addField("🌐 Gateway", `${this.client.ws.ping}ms`, true)
+      .setTimestamp()
+      .setFooter(
+        `Requested by ${msg.author.tag}`,
+        msg.author.displayAvatarURL({
+          dynamic: true,
+          format: "png",
+          size: 2048,
+        }) || undefined
+      );
 
-export const info = {
-  name: "ping",
-  category: "General",
-  description: "Ping, pong!",
-  usage: "ping",
-  requiredUserPermissions: [],
-  requiredBotPermissions: [Permissions.FLAGS.SEND_MESSAGES],
-  type: CCommandType.HYBRID,
-  ephemeral: false,
-};
+    return pingMsg.edit({ content: "", embed: pingEmbed });
+  }
+}

@@ -1,19 +1,14 @@
-import Discord from "discord.js";
-import CClient, { CClientOptions } from "./CClient";
-import { token, clientId, clientSecret, redis } from "./config.json";
+if (Number(process.version.slice(1).split(".")[0]) < 14)
+  throw new Error(
+    "Node 14.0.0 or higher is required. Update Node on your system."
+  );
 
-const config: CClientOptions = {
-  discord: {
-    clientId,
-    clientSecret,
-    intents: Discord.Intents.NON_PRIVILEGED,
-  },
-  redis: {
-    host: redis.host,
-  },
-};
+import CClient from "./CClient";
+import config from "./config.js";
+import DiscordButtons from "discord-buttons";
 
 const client = new CClient(config);
+DiscordButtons(client);
 
 client.on("ready", () => {
   if (!client.user) {
@@ -34,7 +29,7 @@ client.on("ready", () => {
         data: client.encryptData(user.toJSON()),
       })
     );
-    q.expire(`users.${user.id}`, redis.ttl);
+    q.expire(`users.${user.id}`, config.redisTTL);
   });
 
   client.guilds.cache.forEach((guild) => {
@@ -45,7 +40,7 @@ client.on("ready", () => {
         data: client.encryptData(guild.toJSON()),
       })
     );
-    q.expire(`guilds.${guild.id}`, redis.ttl);
+    q.expire(`guilds.${guild.id}`, config.redisTTL);
   });
 
   client.emojis.cache.forEach((emoji) => {
@@ -56,7 +51,7 @@ client.on("ready", () => {
         data: client.encryptData(emoji.toJSON()),
       })
     );
-    q.expire(`emojis.${emoji.id}`, redis.ttl);
+    q.expire(`emojis.${emoji.id}`, config.redisTTL);
   });
 
   client.channels.cache.forEach((channel) => {
@@ -67,12 +62,11 @@ client.on("ready", () => {
         data: client.encryptData(channel.toJSON()),
       })
     );
-    q.expire(`channels.${channel.id}`, redis.ttl);
+    q.expire(`channels.${channel.id}`, config.redisTTL);
   });
 
-  q.exec((err, reply) => {
+  q.exec((err, _) => {
     if (err) throw err;
-    console.log(reply);
   });
 });
 
@@ -84,7 +78,7 @@ client.on("redisReady", () => {
 // this way we know we have redis
 client.redisClient.once("ready", () => {
   console.log(`[Redis] Ready!`);
-  client.login(token);
+  client.login(config.discordToken);
 });
 
 client.redisClient.on("error", (err) => {

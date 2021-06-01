@@ -1,6 +1,7 @@
+import { Message } from "discord.js";
 import CClient from "../CClient";
 
-export default class {
+export default class CEvent {
   client!: CClient;
   constructor(client: CClient) {
     Object.defineProperty(this, "client", {
@@ -10,9 +11,5 @@ export default class {
     });
   }
 
-  async run() {
-    console.log(`[Ready] Logged in as ${this.client.user?.tag}.`);
-
-    this.client.mentionPrefix = new RegExp(`^<@!?${this.client.user?.id}>`);
-  }
+  async run(...args: any[]): Promise<any> {}
 }

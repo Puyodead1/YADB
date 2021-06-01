@@ -1,25 +1,12 @@
-import Discord, {
-  ClientOptions as DiscordClientOptions,
-  Collection,
-} from "discord.js";
+import Discord, { Collection, Message } from "discord.js";
 import { promises, readdir } from "fs";
 import { sep } from "node:path";
 import { join, resolve } from "path";
-import { ClientOpts as RedisClientOptions, RedisClient } from "redis";
-import CCommand from "./Interfaces/CCommand.interface";
+import { RedisClient } from "redis";
 import Crypto from "crypto";
-import { Cipher, CipherGCMOptions } from "node:crypto";
-
-export interface CClientOptions {
-  discord: {
-    clientId: string;
-    clientSecret: string;
-  } & DiscordClientOptions;
-  redis?: {
-    ttl?: number;
-  } & RedisClientOptions;
-  encryption?: CipherGCMOptions;
-}
+import CCommand from "./lib/CCommand";
+import CEvent from "./lib/CEvent";
+import { CClientOptions, CPermissionLevels } from "./Interfaces/CInterfaces";
 
 export default class CClient extends Discord.Client {
   public commands: Collection<string, CCommand>;
@@ -27,23 +14,56 @@ export default class CClient extends Discord.Client {
   readonly redisClient: RedisClient;
   readonly encryptionKey: string;
   readonly encryptionIv: Buffer;
+  readonly permLevelCache: any;
+  readonly defaults: { prefix: string };
+  readonly owners: Discord.UserResolvable[];
+  readonly permissionLevelCache: any;
+  readonly permissionLevels: CPermissionLevels[];
 
   constructor(options: CClientOptions) {
-    super(options.discord);
+    super(options.discordOptions);
+
+    this.owners = options.owners;
+    this.defaults = options.defaults;
+    this.permissionLevels = options.permissionLevels;
 
     // variables used for data encryption
     this.encryptionKey = Crypto.createHash("sha256")
-      .update(options.discord.clientSecret)
+      .update(options.clientSecret)
       .digest("base64")
       .substr(0, 32);
 
     this.encryptionIv = Crypto.randomBytes(16);
 
     this.commands = new Collection<string, CCommand>();
-    this.redisClient = new RedisClient(options.redis || {});
+    this.redisClient = new RedisClient(options.redisOptions || {});
+
+    this.permissionLevelCache = {};
+    for (let i = 0; i < this.permissionLevels.length; i++) {
+      const level = this.permissionLevels[i];
+      this.permissionLevelCache[level.name] = level.level;
+    }
 
     this.loadEvents();
     this.loadCommands();
+  }
+
+  getPermissionLevel(message: Message) {
+    let permlvl = 0;
+
+    const permOrder = this.permissionLevels
+      .slice(0)
+      .sort((p, c) => (p.level < c.level ? 1 : -1));
+
+    while (permOrder.length) {
+      const currentLevel = permOrder.shift();
+      if (!currentLevel) return;
+      if (currentLevel.check(message)) {
+        permlvl = currentLevel.level;
+        break;
+      }
+    }
+    return permlvl;
   }
 
   /**
@@ -108,10 +128,13 @@ export default class CClient extends Discord.Client {
       files
         .filter((file) => file.endsWith(".js"))
         .forEach((file) => {
-          const event: Function = require(join(__dirname, "Events", file))
-            .default;
+          const event: CEvent = new (require(join(
+            __dirname,
+            "Events",
+            file
+          )).default)(this);
           const eventName = file.split(".")[0];
-          this.on(eventName, event.bind(null, this));
+          this.on(eventName, (...args) => event.run(...args));
           delete require.cache[
             require.resolve(join(__dirname, "Events", file))
           ];
@@ -122,12 +145,12 @@ export default class CClient extends Discord.Client {
 
   loadCommand(category: string, name: string) {
     try {
-      const props: CCommand = require(join(
+      const props: CCommand = new (require(join(
         __dirname,
         "Commands",
         category,
         name
-      ));
+      )).default)(this);
       this.commands.set(name, props);
       console.log(`[Commands] Loaded command ${name}`);
       return true;
