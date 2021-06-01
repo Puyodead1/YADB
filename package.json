@@ -18,7 +18,7 @@
     "@types/node": "^15.0.3",
     "@types/redis": "^2.8.28",
     "centra": "^2.4.2",
-    "discord-buttons": "^2.4.1",
+    "discord-buttons": "^3.0.1",
     "discord.js": "github:discordjs/discord.js",
     "mongo": "^0.1.0",
     "ms": "^2.1.3",
