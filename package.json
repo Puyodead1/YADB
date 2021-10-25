@@ -15,7 +15,7 @@
     "@klasa/stopwatch": "^0.0.1",
     "@klasa/utils": "^0.0.8",
     "@types/centra": "^2.2.0",
-    "@types/node": "^16.10.4",
+    "@types/node": "^16.11.5",
     "@types/redis": "^2.8.32",
     "centra": "^2.5.0",
     "discord-buttons": "^2.4.1",
