@@ -1,50 +1,16 @@
-import { Permissions } from "discord.js";
-import { Message, MessageEmbed } from "discord.js";
-import CClient from "../../CClient";
-import { CPermissionLevel } from "../../Interfaces/CInterfaces";
-import CCommand from "../../lib/CCommand";
+import { ApplyOptions } from "@sapphire/decorators";
+import { Command, CommandOptions } from "@sapphire/framework";
+import type { CommandInteraction } from "discord.js";
 
-export default class extends CCommand {
-  constructor(client: CClient) {
-    super(client, {
-      name: "ping",
-      description: "Gets the bots ping",
-      usage: "ping",
-      category: "General",
-      permissionLevel: CPermissionLevel.USER,
-      requiredBotPermissions: [Permissions.FLAGS.SEND_MESSAGES],
-    });
-  }
-
-  async run(msg: Message, args: string[], level: number) {
-    const pingMsg = await msg.reply("Ping?");
-    const ping =
-      (pingMsg.editedTimestamp || pingMsg.createdTimestamp) -
-      (msg.editedTimestamp || msg.createdTimestamp);
-
-    const pingEmbed = new MessageEmbed()
-      .setAuthor(
-        this.client.user?.username,
-        this.client.user?.displayAvatarURL({
-          dynamic: true,
-          format: "png",
-          size: 2048,
-        }) || undefined
-      )
-      .setColor("PURPLE")
-      .setTitle("Ping")
-      .addField("🤖 Bot", `${ping!}ms`, true)
-      .addField("🌐 Gateway", `${this.client.ws.ping}ms`, true)
-      .setTimestamp()
-      .setFooter(
-        `Requested by ${msg.author.tag}`,
-        msg.author.displayAvatarURL({
-          dynamic: true,
-          format: "png",
-          size: 2048,
-        }) || undefined
-      );
-
-    return pingMsg.edit({ content: "", embed: pingEmbed });
+@ApplyOptions<CommandOptions>({
+  description: "Ping",
+  chatInputCommand: {
+    register: true,
+    guildIds: ["638455519652085780"],
+  },
+})
+export class UserCommand extends Command {
+  public async chatInputRun(interaction: CommandInteraction) {
+    return interaction.reply("Pong!");
   }
 }

@@ -1,20 +1,24 @@
-import { Intents, Message } from "discord.js";
-import { CClientOptions } from "./Interfaces/CInterfaces";
+import { LogLevel } from "@sapphire/framework";
+import type { Message } from "discord.js";
+import type { CClientOptions } from "./Interfaces/CInterfaces";
 
 const config: CClientOptions = {
-  discordToken: "bot token",
-  clientId: "bot id",
-  clientSecret: "bot secret",
-  owners: [],
+  discordToken: "a",
+  clientId: "a",
+  clientSecret: "a",
   redisOptions: {
-    host: "127.0.0.1",
+    host: "a",
+    password: "",
   },
   redisTTL: 2.592e9, // 30 days
   discordOptions: {
-    intents: Intents.NON_PRIVILEGED,
-  },
-  defaults: {
-    prefix: "..",
+    intents: 32767,
+    logger: {
+      level: LogLevel.Debug,
+    },
+    shards: "auto",
+    enableLoaderTraceLoggings: true,
+    loadDefaultErrorListeners: true,
   },
   permissionLevels: [
     {
@@ -27,10 +31,12 @@ const config: CClientOptions = {
       name: "Bot Staff",
       check: ({ guild, member }: Message) => {
         if (!guild || !member) return false;
+        const guildSettings = guild.client.guildSettings.get(guild.id);
+        if (!guildSettings) return false;
         return (
           member.roles.cache.some((r) =>
-            guild.settings.roles.staff.includes(r.id)
-          ) || guild.settings.users.staff.includes(member.id)
+            guildSettings.roles.staff.includes(r.id)
+          ) || guildSettings.users.staff.includes(member.id)
         );
       },
     },
@@ -39,10 +45,12 @@ const config: CClientOptions = {
       name: "Bot Mod",
       check: ({ guild, member }: Message) => {
         if (!guild || !member) return false;
+        const guildSettings = guild.client.guildSettings.get(guild.id);
+        if (!guildSettings) return false;
         return (
           member.roles.cache.some((r) =>
-            guild.settings.roles.mod.includes(r.id)
-          ) || guild.settings.users.mod.includes(member.id)
+            guildSettings.roles.mod.includes(r.id)
+          ) || guildSettings.users.mod.includes(member.id)
         );
       },
     },
@@ -51,11 +59,13 @@ const config: CClientOptions = {
       name: "Guild Mod",
       check: ({ guild, member }: Message) => {
         if (!guild || !member) return false;
+        const guildSettings = guild.client.guildSettings.get(guild.id);
+        if (!guildSettings) return false;
         return (
           member.roles.cache.some((r) =>
-            guild.settings.roles.mod.includes(r.id)
+            guildSettings.roles.mod.includes(r.id)
           ) ||
-          guild.settings.users.mod.includes(member.id) ||
+          guildSettings.users.mod.includes(member.id) ||
           (member.permissions.has("BAN_MEMBERS") &&
             member.permissions.has("KICK_MEMBERS"))
         );
@@ -66,11 +76,13 @@ const config: CClientOptions = {
       name: "Admin",
       check: ({ guild, member }: Message) => {
         if (!guild || !member) return false;
+        const guildSettings = guild.client.guildSettings.get(guild.id);
+        if (!guildSettings) return false;
         return (
           member.roles.cache.some((r) =>
-            guild.settings.roles.admin.includes(r.id)
+            guildSettings.roles.admin.includes(r.id)
           ) ||
-          guild.settings.users.admin.includes(member.id) ||
+          guildSettings.users.admin.includes(member.id) ||
           (member.permissions.has("ADMINISTRATOR") &&
             member.permissions.has("MANAGE_GUILD"))
         );
@@ -81,16 +93,16 @@ const config: CClientOptions = {
       name: "Guild Owner",
       check: ({ guild, member }: Message) => {
         if (!guild || !member) return false;
-        return member.id === guild.ownerID;
+        return member.id === guild.ownerId;
       },
     },
-    {
-      level: 10,
-      name: "Bot Owner",
-      check: ({ author, client }: Message) => {
-        return client.owners.includes(author.id);
-      },
-    },
+    // {
+    //   level: 10,
+    //   name: "Bot Owner",
+    //   check: ({ author, client }: Message) => {
+    //     return client.owners.includes(author.id);
+    //   },
+    // },
   ],
 };
 

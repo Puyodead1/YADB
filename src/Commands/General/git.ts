@@ -1,23 +1,17 @@
+import { ApplyOptions } from "@sapphire/decorators";
+import { Command, CommandOptions } from "@sapphire/framework";
 import { exec } from "child_process";
-import { Permissions } from "discord.js";
-import { Message, MessageEmbed } from "discord.js";
-import CClient from "../../CClient";
-import { CPermissionLevel } from "../../Interfaces/CInterfaces";
-import CCommand from "../../lib/CCommand";
+import { CommandInteraction, MessageEmbed } from "discord.js";
 
-export default class extends CCommand {
-  constructor(client: CClient) {
-    super(client, {
-      name: "git",
-      category: "General",
-      description: "Gets the bots current git commit hash",
-      usage: "git",
-      permissionLevel: CPermissionLevel.USER,
-      requiredBotPermissions: [Permissions.FLAGS.SEND_MESSAGES],
-    });
-  }
-
-  getBranch() {
+@ApplyOptions<CommandOptions>({
+  description: "Retrieve bot Git information",
+  chatInputCommand: {
+    register: true,
+    guildIds: ["638455519652085780"],
+  },
+})
+export class UserCommand extends Command {
+  getBranch(): Promise<string> {
     return new Promise((resolve, reject) => {
       exec("git rev-parse --abbrev-ref HEAD", (err, stdout, _) => {
         if (err) reject(err);
@@ -27,7 +21,7 @@ export default class extends CCommand {
     });
   }
 
-  getCommit() {
+  getCommit(): Promise<string> {
     return new Promise((resolve, reject) => {
       exec("git rev-parse HEAD", (err, stdout, _) => {
         if (err) reject(err);
@@ -37,7 +31,7 @@ export default class extends CCommand {
     });
   }
 
-  async run(msg: Message, args: string[], level: number) {
+  public async chatInputRun(interaction: CommandInteraction) {
     const commit = await this.getCommit();
     const branch = await this.getBranch();
 
@@ -45,24 +39,9 @@ export default class extends CCommand {
       .addField("Current Branch", branch)
       .addField("Commit", commit)
       .setTimestamp()
-      .setColor("PURPLE")
-      .setFooter(
-        `Requested by ${msg.author.tag}`,
-        msg.author.displayAvatarURL({
-          dynamic: true,
-          format: "png",
-          size: 2048,
-        })
-      )
-      .setAuthor(
-        this.client.user?.tag,
-        this.client.user?.displayAvatarURL({
-          dynamic: true,
-          format: "png",
-          size: 2048,
-        })
-      );
-
-    return msg.reply(embed);
+      .setColor("PURPLE");
+    return interaction.reply({
+      embeds: [embed],
+    });
   }
 }
